@@ -28,3 +28,7 @@ Thumbs.db
 # Generated files
 compile_commands.json
 .cmake/
+
+# Third party (except riscv-opcodes)
+third_party/*
+!third_party/riscv-opcodes/

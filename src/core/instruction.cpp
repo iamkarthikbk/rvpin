@@ -1,9 +1,32 @@
 #include "instruction.hpp"
+#include "encoding.hpp"
+#include <sstream>
 
 namespace rvpin {
 
-Instruction::Instruction(uint32_t raw_inst) : raw_inst_(raw_inst) {
+Instruction::Instruction(uint32_t raw_inst) : raw_inst_(raw_inst), type_(Type::UNKNOWN) {
     decode();
+}
+
+void Instruction::decode() {
+    // Try to match against known instruction encodings
+    for (const auto& encoding : encoding::INSTRUCTION_ENCODINGS) {
+        if ((raw_inst_ & encoding.mask) == (encoding.match & encoding.mask)) {
+            mnemonic_ = encoding.name;
+            return;
+        }
+    }
+
+    // Special case for ECALL (until we get proper encoding)
+    if (raw_inst_ == 0x00000073) {
+        mnemonic_ = "ECALL";
+        type_ = Type::I_TYPE;
+        return;
+    }
+
+    // If no match found, mark as unknown
+    mnemonic_ = "UNKNOWN";
+    type_ = Type::UNKNOWN;
 }
 
 uint32_t Instruction::getOpcode() const {
@@ -28,41 +51,6 @@ uint32_t Instruction::getRs1() const {
 
 uint32_t Instruction::getRs2() const {
     return (raw_inst_ >> 20) & 0x1F;
-}
-
-void Instruction::decode() {
-    uint32_t opcode = getOpcode();
-    
-    // Basic instruction type detection
-    switch (opcode) {
-        case 0x33: // R-type
-            type_ = Type::R_TYPE;
-            break;
-        case 0x13: // I-type
-            type_ = Type::I_TYPE;
-            break;
-        case 0x23: // S-type
-            type_ = Type::S_TYPE;
-            break;
-        case 0x63: // B-type
-            type_ = Type::B_TYPE;
-            break;
-        case 0x37: // U-type
-        case 0x17:
-            type_ = Type::U_TYPE;
-            break;
-        case 0x6F: // J-type
-            type_ = Type::J_TYPE;
-            break;
-        default:
-            type_ = Type::UNKNOWN;
-    }
-    
-    // For demonstration, just use a simple mnemonic
-    mnemonic_ = "UNKNOWN";
-    if (raw_inst_ == 0x00000073) {
-        mnemonic_ = "ECALL";
-    }
 }
 
 } // namespace rvpin

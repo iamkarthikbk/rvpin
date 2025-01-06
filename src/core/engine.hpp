@@ -4,6 +4,7 @@
 #include <vector>
 #include <functional>
 #include <string>
+#include <fstream> // Added include for std::ifstream
 #include "decoder.hpp"
 
 namespace rvpin {
@@ -32,6 +33,10 @@ private:
     ~Engine() = default;
     Engine(const Engine&) = delete;
     Engine& operator=(const Engine&) = delete;
+    
+    // ELF parsing helpers
+    bool isElfFile(std::ifstream& file);
+    std::vector<uint32_t> loadTextSection(std::ifstream& program);
     
     std::string program_path_;
     std::unique_ptr<Decoder> decoder_;

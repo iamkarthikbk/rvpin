@@ -1,107 +1,181 @@
-# RVPin - RISC-V Dynamic Binary Instrumentation Tool
+# RVPin: RISC-V Dynamic Binary Instrumentation Tool
 
-RVPin is a dynamic binary instrumentation tool for RISC-V, inspired by Intel's Pin framework. It allows you to analyze and modify RISC-V programs at runtime by intercepting instructions and system calls.
+RVPin is a powerful Dynamic Binary Instrumentation (DBI) tool for RISC-V programs. It allows you to analyze and modify RISC-V programs while they're running, making it perfect for debugging, profiling, and program analysis.
+
+## What is Dynamic Binary Instrumentation?
+
+Dynamic Binary Instrumentation (DBI) is a technique that allows you to add code to a program while it's running. This is useful for:
+- Counting how many times each instruction is used
+- Tracking which functions are called
+- Monitoring system calls
+- Finding memory leaks and bugs
+- And much more!
 
 ## Features
 
-- Instruction-level instrumentation
-- System call interception and analysis
-- Extensible API for creating custom analysis tools
-- Support for RISC-V instruction decoding
-- Non-intrusive binary analysis
+- **Instruction Analysis**: Track and analyze RISC-V instructions as they execute
+- **Instrumentation API**: Easy-to-use API for adding your own analysis code
+- **Built-in Tools**: Ready-to-use tools for common tasks:
+  - Instruction Counter: See which instructions are used most often
+  - System Call Tracer: Monitor interactions with the operating system
 
 ## Prerequisites
 
-- CMake (3.10 or later)
-- C++17 compatible compiler
-- RISC-V GNU Toolchain (`riscv64-unknown-elf-gcc`, `riscv64-unknown-elf-as`)
+Before you start, make sure you have:
 
-## Building
+1. **C++ Development Tools**:
+   - A C++17 compatible compiler (GCC or Clang)
+   - CMake (version 3.10 or higher)
+   - Make
 
+2. **RISC-V Toolchain**:
+   - RISC-V GNU Toolchain for compiling test programs
+   - Instructions for installing the toolchain:
+     ```bash
+     # On Ubuntu/Debian:
+     sudo apt-get install gcc-riscv64-linux-gnu
+
+     # On macOS with Homebrew:
+     brew install riscv-tools
+     ```
+
+3. **Python**:
+   - Python 3.6 or higher
+   - Required for running the setup scripts
+
+## Getting Started
+
+### 1. Clone the Repository
 ```bash
-mkdir build
+git clone https://github.com/iamkarthikbk/rvpin.git
+cd rvpin
+```
+
+### 2. Run the Setup Script
+```bash
+# Make the script executable
+chmod +x scripts/setup.sh
+
+# Run the setup script
+./scripts/setup.sh
+```
+This script will:
+- Download necessary RISC-V instruction definitions
+- Generate the instruction encoding files
+- Build the project
+
+### 3. Build the Project
+```bash
+# Create build directory
+mkdir -p build
 cd build
+
+# Configure and build
 cmake ..
 make
 ```
 
-## Project Structure
+### 4. Try the Example Tools
 
-- `src/core/`: Core instrumentation engine components
-  - `instruction.*`: RISC-V instruction representation and decoding
-  - `decoder.*`: Instruction decoder
-  - `engine.*`: Main instrumentation engine
-- `src/api/`: Public API for tool writers
-  - `instrumentation.*`: Base classes and utilities for creating tools
-- `examples/`: Example instrumentation tools
-  - `syscall_tracer.cpp`: System call tracking tool
-  - `instruction_counter.cpp`: Instruction counting tool
-- `test/`: Test programs and utilities
-  - `hello.S`: Simple RISC-V hello world program
-
-## Usage
-
-### Running the Syscall Tracer Example
-
-The project includes a simple hello world program written in RISC-V assembly and a syscall tracer tool to analyze it. Here's how to run the example:
-
-1. Build the project as described above:
+#### Instruction Counter
+Count how many times each RISC-V instruction is used in a program:
 ```bash
-mkdir build
-cd build
-cmake ..
-make
+# First, build the hello world test program
+make hello
+
+# Then run the instruction counter
+./instruction_counter ./hello
 ```
 
-2. The hello world program (`hello`) will be automatically built during the make process. It's a simple program that:
-   - Prints "Hello, World!" to stdout using the `write` syscall
-   - Exits using the `exit` syscall
+You should see output like this:
+```
+Instruction Count Summary:
+-------------------------
+addi   : 6
+ecall  : 2
+auipc  : 1
+-------------------------
+Total Instructions: 9
+```
 
-3. Run the syscall tracer on the hello world program:
+#### System Call Tracer
+Monitor system calls made by a program:
 ```bash
 ./syscall_tracer ./hello
 ```
 
-4. You should see output similar to:
-```
-Syscall detected: 64    # write syscall
-Syscall detected: 93    # exit syscall
+## Writing Your Own Tools
 
-Syscall Summary:
----------------
-Total syscalls: 2
-```
+You can create your own analysis tools using RVPin's API. Here's a simple example:
 
-This demonstrates the syscall tracer intercepting and logging:
-- The `write` syscall (64) used to print "Hello, World!"
-- The `exit` syscall (93) used to terminate the program
-
-## Creating Custom Tools
-
-1. Create a new class inheriting from `rvpin::api::InstrumentationTool`
-2. Override the callback methods you're interested in:
-   - `onBeforeInstruction()`
-   - `onAfterInstruction()`
-   - `onProgramStart()`
-   - `onProgramEnd()`
-3. Register your tool with the RVPin engine
-
-Example:
 ```cpp
-class MyTool : public rvpin::api::InstrumentationTool {
-    void onBeforeInstruction(const rvpin::Instruction& inst) override {
+#include "core/engine.hpp"
+
+class MyTool {
+public:
+    void onBeforeInstruction(const rvpin::Instruction& inst) {
         // Your analysis code here
+        // This runs before each instruction
     }
 };
+
+int main(int argc, char* argv[]) {
+    auto& engine = rvpin::Engine::getInstance();
+    
+    // Initialize the engine with the target program
+    if (!engine.initialize(argc - 1, argv + 1)) {
+        return 1;
+    }
+    
+    // Create your tool
+    MyTool tool;
+    
+    // Register callbacks
+    engine.registerBeforeInstruction(
+        [&tool](const rvpin::Instruction& inst) {
+            tool.onBeforeInstruction(inst);
+        });
+    
+    // Run the instrumented program
+    return engine.run();
+}
 ```
 
-## Current Limitations
+## Project Structure
 
-- Basic instruction execution only
-- Limited system call support
-- No support for dynamic libraries
-- No memory state tracking
+- `src/core/`: Core instrumentation engine
+  - `engine.cpp`: Main instrumentation engine
+  - `decoder.cpp`: RISC-V instruction decoder
+  - `instruction.cpp`: Instruction representation
+- `examples/`: Example tools
+  - `instruction_counter.cpp`: Count instruction usage
+  - `syscall_tracer.cpp`: Track system calls
+- `scripts/`: Setup and utility scripts
+  - `setup.sh`: Project setup script
+  - `generate_encoding.py`: Generate instruction encodings
 
 ## Contributing
 
-Contributions are welcome! Please feel free to submit pull requests.
+Contributions are welcome! Whether it's:
+- Bug fixes
+- New features
+- Documentation improvements
+- Tool improvements
+
+Please feel free to:
+1. Fork the repository
+2. Create your feature branch
+3. Commit your changes
+4. Push to the branch
+5. Open a Pull Request
+
+## License
+
+This project is licensed under the MIT License - see the LICENSE file for details.
+
+## Support
+
+If you encounter any issues or have questions:
+1. Check the [Issues](https://github.com/iamkarthikbk/rvpin/issues) page
+2. Open a new issue if needed
+3. Provide as much detail as possible about your problem
