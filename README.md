@@ -179,3 +179,21 @@ If you encounter any issues or have questions:
 1. Check the [Issues](https://github.com/iamkarthikbk/rvpin/issues) page
 2. Open a new issue if needed
 3. Provide as much detail as possible about your problem
+
+## Cache Simulator Setup
+
+### Python Dependencies
+The cache analyzer visualization requires Python 3.9+ and several dependencies. Install them using:
+
+```bash
+pip install -r requirements.txt
+```
+
+## Setup Instructions
+
+### Python Setup
+The cache analyzer visualization requires Python 3.9+ and several dependencies. Install them using:
+
+```bash
+pip install -r requirements.txt
+```

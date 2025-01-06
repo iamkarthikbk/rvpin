@@ -32,3 +32,6 @@ compile_commands.json
 # Third party (except riscv-opcodes)
 third_party/*
 !third_party/riscv-opcodes/
+
+# ChampSim headers (these are symlinked from third_party/champsim)
+include/champsim/

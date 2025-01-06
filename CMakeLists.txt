@@ -4,12 +4,26 @@ project(rvpin)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
+# Add ChampSim directories
+include_directories(${CMAKE_SOURCE_DIR}/third_party/champsim/inc)
+include_directories(${CMAKE_SOURCE_DIR}/third_party/champsim/src)
+link_directories(${CMAKE_SOURCE_DIR}/third_party/champsim/lib)
+
+# Add our include directories
+include_directories(${CMAKE_SOURCE_DIR}/src)
+include_directories(${CMAKE_SOURCE_DIR}/include)
+
+# Find required packages
+find_package(fmt REQUIRED)
+find_package(Catch2 REQUIRED)
+
 # Find RISC-V toolchain
 find_program(RISCV_GCC riscv64-unknown-elf-gcc)
 find_program(RISCV_AS riscv64-unknown-elf-as)
 
-# Include directories
-include_directories(${CMAKE_SOURCE_DIR}/src)
+# Add subdirectories
+add_subdirectory(src)
+add_subdirectory(examples)
 
 # Main library
 add_library(rvpin SHARED
@@ -28,8 +42,13 @@ add_executable(syscall_tracer
     examples/syscall_tracer.cpp
 )
 
+add_executable(champsim_example
+    examples/champsim_example.cpp
+)
+
 target_link_libraries(instruction_counter PRIVATE rvpin)
 target_link_libraries(syscall_tracer PRIVATE rvpin)
+target_link_libraries(champsim_example fmt::fmt)
 
 # Test program
 add_custom_command(

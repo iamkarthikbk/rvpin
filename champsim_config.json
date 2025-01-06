@@ -1,0 +1,29 @@
+{
+    "executable_name": "champsim",
+    "block_size": 64,
+    "page_size": 4096,
+    "L1I": {
+        "sets": 64,
+        "ways": 8,
+        "prefetcher": "no",
+        "replacement": "lru"
+    },
+    "L1D": {
+        "sets": 64,
+        "ways": 8,
+        "prefetcher": "no",
+        "replacement": "lru"
+    },
+    "L2C": {
+        "sets": 512,
+        "ways": 8,
+        "prefetcher": "no",
+        "replacement": "lru"
+    },
+    "LLC": {
+        "sets": 2048,
+        "ways": 16,
+        "prefetcher": "no",
+        "replacement": "lru"
+    }
+}

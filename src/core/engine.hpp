@@ -13,7 +13,10 @@ class Engine {
 public:
     using InstrumentationCallback = std::function<void(const Instruction&)>;
     
-    static Engine& getInstance();
+    static Engine& getInstance() {
+        static Engine instance;
+        return instance;
+    }
     
     // Initialize the instrumentation engine
     bool initialize(int argc, char* argv[]);
@@ -27,6 +30,14 @@ public:
     
     // Get the current instruction being executed
     const Instruction* getCurrentInstruction() const;
+    
+    // Memory access callback type
+    using MemoryCallback = std::function<void(uint64_t, bool, uint32_t)>;
+    
+    // Register memory access callback
+    void registerMemoryAccess(MemoryCallback callback) {
+        memory_callback_ = callback;
+    }
     
 private:
     Engine() = default;
@@ -45,6 +56,7 @@ private:
     
     // Internal state
     std::unique_ptr<Instruction> current_instruction_;
+    MemoryCallback memory_callback_;
 };
 
 } // namespace rvpin
